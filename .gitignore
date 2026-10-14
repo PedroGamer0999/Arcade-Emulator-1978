@@ -1,0 +1,59 @@
+# ===============================
+# Binários e Objetos de Compilação
+# ===============================
+*.o
+*.obj
+*.so
+*.dylib
+
+# Executáveis
+*.exe
+space_invaders
+space_invaders.exe
+
+# Bibliotecas dinâmicas e estáticas
+*.dll
+*.lib
+*.a
+
+# Arquivos de depuração e linking
+*.pdb
+*.ilk
+*.map
+*.dSYM/
+
+# ===============================
+# Configurações de IDEs e Editores
+# ===============================
+.vscode/
+.vs/
+*.code-workspace
+
+# ===============================
+# Arquivos de Sistema Operacional
+# ===============================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ===============================
+# Logs e Arquivos Temporários
+# ===============================
+*.log
+*.tmp
+*~
+.memory_backup/
+
+# ===============================
+# Antigravity AI Agents Toolkit
+# ===============================
+# Ignora as skills, agentes e arquivos pesados baixados pelo ag-kit
+.agents/*
+# Preserva e versiona estritamente as memorias e decisoes do projeto
+!.agents/memory/
+!.agents/memory/**
+

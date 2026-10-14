@@ -1,0 +1,140 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ========================================================
+  # Compilação para Linux (Ubuntu x64)
+  # ========================================================
+  build-linux:
+    name: Build Linux (x64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make libsdl2-dev tar
+
+      - name: Compile Space Invaders (Linux)
+        run: |
+          gcc -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders -lSDL2
+
+      - name: Package Linux Artifact
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          DIST_DIR="dist/space-invaders-${TAG_NAME}-linux-x64"
+          mkdir -p "${DIST_DIR}"
+          
+          # Copia binário e recursos essenciais
+          cp space_invaders "${DIST_DIR}/"
+          cp -r rom "${DIST_DIR}/"
+          [ -f README.md ] && cp README.md "${DIST_DIR}/"
+          [ -f LICENCE.md ] && cp LICENCE.md "${DIST_DIR}/"
+          
+          # Compacta em tar.gz
+          tar -czvf "space-invaders-${TAG_NAME}-linux-x64.tar.gz" -C dist "space-invaders-${TAG_NAME}-linux-x64"
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: space-invaders-linux-x64
+          path: space-invaders-*-linux-x64.tar.gz
+          retention-days: 1
+
+  # ========================================================
+  # Compilação para Windows (UCRT64 Clang/GCC x64)
+  # ========================================================
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2 UCRT64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-clang
+            mingw-w64-ucrt-x86_64-SDL2
+
+      - name: Compile Space Invaders (Windows)
+        shell: msys2 {0}
+        run: |
+          clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
+
+      - name: Package Windows Artifact
+        shell: pwsh
+        run: |
+          $tagName = "${{ github.ref_name }}"
+          $distDir = "dist/space-invaders-${tagName}-windows-x64"
+          New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+
+          # Copia executável
+          Copy-Item "space_invaders.exe" -Destination "$distDir/"
+
+          # Garante a cópia da SDL2.dll do MSYS2 UCRT64 ou local
+          if (Test-Path "C:/msys64/ucrt64/bin/SDL2.dll") {
+            Copy-Item "C:/msys64/ucrt64/bin/SDL2.dll" -Destination "$distDir/"
+          } elseif (Test-Path "SDL2.dll") {
+            Copy-Item "SDL2.dll" -Destination "$distDir/"
+          }
+
+          # Copia pasta de ROMs e licença
+          Copy-Item -Recurse "rom" -Destination "$distDir/"
+          if (Test-Path "README.md") { Copy-Item "README.md" -Destination "$distDir/" }
+          if (Test-Path "LICENCE.md") { Copy-Item "LICENCE.md" -Destination "$distDir/" }
+
+          # Compacta em .zip
+          $zipName = "space-invaders-${tagName}-windows-x64.zip"
+          Compress-Archive -Path "$distDir/*" -DestinationPath $zipName -Force
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: space-invaders-windows-x64
+          path: space-invaders-*-windows-x64.zip
+          retention-days: 1
+
+  # ========================================================
+  # Criação da Release e Publicação dos Arquivos
+  # ========================================================
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Built Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create GitHub Release and Attach Packages
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Space Invaders Emulator ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
+          files: |
+            release-assets/*.tar.gz
+            release-assets/*.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
