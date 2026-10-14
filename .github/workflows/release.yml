@@ -63,6 +63,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup MSYS2 UCRT64
+        id: msys2
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -75,6 +76,7 @@ jobs:
         shell: msys2 {0}
         run: |
           clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
+          cp /ucrt64/bin/SDL2.dll .
 
       - name: Package Windows Artifact
         shell: pwsh
@@ -83,20 +85,42 @@ jobs:
           $distDir = "dist/space-invaders-${tagName}-windows-x64"
           New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 
-          # Copia executável
+          # Copia executavel
           Copy-Item "space_invaders.exe" -Destination "$distDir/"
 
-          # Garante a cópia da SDL2.dll do MSYS2 UCRT64 ou local
-          if (Test-Path "C:/msys64/ucrt64/bin/SDL2.dll") {
-            Copy-Item "C:/msys64/ucrt64/bin/SDL2.dll" -Destination "$distDir/"
-          } elseif (Test-Path "SDL2.dll") {
-            Copy-Item "SDL2.dll" -Destination "$distDir/"
+          # Localiza e copia a SDL2.dll do MSYS2 UCRT64 ou do diretorio raiz
+          $msysLocation = "${{ steps.msys2.outputs.msys2-location }}"
+          $possiblePaths = @(
+            "SDL2.dll",
+            "$msysLocation/ucrt64/bin/SDL2.dll",
+            "C:/msys64/ucrt64/bin/SDL2.dll"
+          )
+
+          $copied = $false
+          foreach ($p in $possiblePaths) {
+            if ($p -and (Test-Path $p)) {
+              Copy-Item $p -Destination "$distDir/SDL2.dll" -Force
+              Write-Host "SDL2.dll copiada com sucesso a partir de: $p"
+              $copied = $true
+              break
+            }
           }
 
-          # Copia pasta de ROMs e licença
+          if (-not $copied) {
+            Write-Error "FALHA CRITICA: SDL2.dll nao foi encontrada para empacotamento!"
+            exit 1
+          }
+
+          # Copia pasta de ROMs e documentacao/licenca
           Copy-Item -Recurse "rom" -Destination "$distDir/"
           if (Test-Path "README.md") { Copy-Item "README.md" -Destination "$distDir/" }
           if (Test-Path "LICENCE.md") { Copy-Item "LICENCE.md" -Destination "$distDir/" }
+
+          # Validacao de integridade antes da compactacao
+          if (-not (Test-Path "$distDir/space_invaders.exe") -or -not (Test-Path "$distDir/SDL2.dll")) {
+            Write-Error "FALHA CRITICA: Arquivos essenciais ausentes no pacote de distribuicao ($distDir)!"
+            exit 1
+          }
 
           # Compacta em .zip
           $zipName = "space-invaders-${tagName}-windows-x64.zip"
