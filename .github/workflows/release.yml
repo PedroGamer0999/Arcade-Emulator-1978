@@ -27,7 +27,7 @@ jobs:
 
       - name: Compile Space Invaders (Linux)
         run: |
-          gcc -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders -lSDL2
+          gcc -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders -lSDL2 -lm
 
       - name: Package Linux Artifact
         run: |
@@ -38,6 +38,7 @@ jobs:
           # Copia binário e recursos essenciais
           cp space_invaders "${DIST_DIR}/"
           cp -r rom "${DIST_DIR}/"
+          [ -d sounds ] && cp -r sounds "${DIST_DIR}/"
           [ -f README.md ] && cp README.md "${DIST_DIR}/"
           [ -f LICENCE.md ] && cp LICENCE.md "${DIST_DIR}/"
           
@@ -75,7 +76,7 @@ jobs:
       - name: Compile Space Invaders (Windows)
         shell: msys2 {0}
         run: |
-          clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
+          clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
           cp /ucrt64/bin/SDL2.dll .
 
       - name: Package Windows Artifact
@@ -111,8 +112,9 @@ jobs:
             exit 1
           }
 
-          # Copia pasta de ROMs e documentacao/licenca
+          # Copia pasta de ROMs, sons e documentacao/licenca
           Copy-Item -Recurse "rom" -Destination "$distDir/"
+          if (Test-Path "sounds") { Copy-Item -Recurse "sounds" -Destination "$distDir/" }
           if (Test-Path "README.md") { Copy-Item "README.md" -Destination "$distDir/" }
           if (Test-Path "LICENCE.md") { Copy-Item "LICENCE.md" -Destination "$distDir/" }
 
