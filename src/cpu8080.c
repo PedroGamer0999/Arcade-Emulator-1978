@@ -18,6 +18,8 @@ void init_cpu(State8080 *cpu)
     cpu->sp = 0;
     cpu->pc = 0;
     cpu->flags = 0;
+    cpu->inte = 0;
+    cpu->halt = 0;
 }
 
 int carregar_rom(State8080 *cpu, const char *caminho_arquivo, uint16_t offset)
@@ -67,9 +69,57 @@ void set_hl(State8080 *cpu, uint16_t valor) {
     cpu->h = (valor >> 8) & 0xFF;
     cpu->l = valor & 0xFF;
 }
-int exec_instrucao(State8080 *cpu, InputOutput *io)
+
+// Tabela oficial de ciclos consumidos por instrucao do Intel 8080
+static const uint8_t cycles_8080[256] = {
+//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+    4, 10,  7,  5,  5,  5,  7,  4,  4, 10,  7,  5,  5,  5,  7,  4, // 0x00 - 0x0F
+    4, 10,  7,  5,  5,  5,  7,  4,  4, 10,  7,  5,  5,  5,  7,  4, // 0x10 - 0x1F
+    4, 10, 16,  5,  5,  5,  7,  4,  4, 10, 16,  5,  5,  5,  7,  4, // 0x20 - 0x2F
+    4, 10, 13,  5, 10, 10, 10,  4,  4, 10, 13,  5,  5,  5,  7,  4, // 0x30 - 0x3F
+    5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5, // 0x40 - 0x4F
+    5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5, // 0x50 - 0x5F
+    5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5, // 0x60 - 0x6F
+    7,  7,  7,  7,  7,  7,  7,  7,  5,  5,  5,  5,  5,  5,  7,  5, // 0x70 - 0x7F
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4, // 0x80 - 0x8F
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4, // 0x90 - 0x9F
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4, // 0xA0 - 0xAF
+    4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4, // 0xB0 - 0xBF
+    5, 10, 10, 10, 11, 11,  7, 11,  5, 10, 10, 10, 11, 17,  7, 11, // 0xC0 - 0xCF
+    5, 10, 10, 10, 11, 11,  7, 11,  5, 10, 10, 10, 11, 17,  7, 11, // 0xD0 - 0xDF
+    5, 10, 10, 18, 11, 11,  7, 11,  5,  5, 10,  4, 11, 17,  7, 11, // 0xE0 - 0xEF
+    5, 10, 10,  4, 11, 11,  7, 11,  5,  5, 10,  4, 11, 17,  7, 11  // 0xF0 - 0xFF
+};
+
+int disparar_interrupcao(State8080 *cpu, uint8_t opcode_rst)
 {
+    if (!cpu->inte) {
+        return 0; // Interrupcoes desabilitadas por DI
+    }
+
+    cpu->inte = 0; // Desabilita interrupcoes automaticamente
+    cpu->halt = 0; // Tira a CPU do estado de HALT se aplicavel
+
+    // Salva o PC atual na pilha (Little-Endian: byte baixo em SP-2, byte alto em SP-1)
+    cpu->sp -= 2;
+    cpu->memory[cpu->sp] = cpu->pc & 0xFF;
+    cpu->memory[cpu->sp + 1] = (cpu->pc >> 8) & 0xFF;
+
+    // Desvia para o vetor correspondente (RST n salta para n * 8)
+    cpu->pc = opcode_rst & 0x38;
+
+    return 1;
+}
+
+int exec_instrucao(State8080 *cpu, InputOutput *io, int *cycles_spent)
+{
+    if (cpu->halt) {
+        if (cycles_spent) *cycles_spent = 4;
+        return 0;
+    }
+
     uint8_t opcode = cpu->memory[cpu->pc];
+    int cycles = cycles_8080[opcode];
 
     switch (opcode)
     {
@@ -538,24 +588,28 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
             if (!(cpu->flags & (1 << 6))) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
         case 0xC8:
             if (cpu->flags & (1 << 6)) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
         case 0xD0:
             if (!(cpu->flags & (1 << 0))) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
         case 0xD8:
             if (cpu->flags & (1 << 0)) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
 
@@ -590,8 +644,8 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
         }
 
         // --- INTERRUPÇÕES E I/O ---
-        case 0xFB: cpu->pc += 1; break; // EI
-        case 0xF3: cpu->pc += 1; break; // DI
+        case 0xFB: cpu->inte = 1; cpu->pc += 1; break; // EI (Enable Interrupts)
+        case 0xF3: cpu->inte = 0; cpu->pc += 1; break; // DI (Disable Interrupts)
         case 0xDB: // IN port
         {
             uint8_t port = cpu->memory[cpu->pc + 1];
@@ -678,7 +732,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
         case 0x73: cpu->memory[get_hl(cpu)] = cpu->e; cpu->pc += 1; break; // MOV M, E
         case 0x74: cpu->memory[get_hl(cpu)] = cpu->h; cpu->pc += 1; break; // MOV M, H
         case 0x75: cpu->memory[get_hl(cpu)] = cpu->l; cpu->pc += 1; break; // MOV M, L
-        case 0x76: cpu->pc += 1; break;                                    // HLT (Halt)
+        case 0x76: cpu->halt = 1; cpu->pc += 1; break;                                    // HLT (Halt)
         case 0x77: cpu->memory[get_hl(cpu)] = cpu->a; cpu->pc += 1; break; // MOV M, A
         case 0x39: { // DAD SP
             uint32_t res = (uint32_t)get_hl(cpu) + cpu->sp;
@@ -725,6 +779,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else {
                 cpu->pc += 3;
             }
@@ -740,6 +795,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else {
                 cpu->pc += 3;
             }
@@ -755,6 +811,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else {
                 cpu->pc += 3;
             }
@@ -770,6 +827,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else {
                 cpu->pc += 3;
             }
@@ -825,6 +883,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else cpu->pc += 3;
             break;
         }
@@ -838,6 +897,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else cpu->pc += 3;
             break;
         }
@@ -851,6 +911,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else cpu->pc += 3;
             break;
         }
@@ -864,6 +925,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
                 cpu->memory[cpu->sp] = ret_addr & 0xFF;
                 cpu->memory[cpu->sp + 1] = (ret_addr >> 8) & 0xFF;
                 cpu->pc = target;
+                cycles += 6;
             } else cpu->pc += 3;
             break;
         }
@@ -873,6 +935,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
             if (cpu->flags & (1 << 7)) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
 
@@ -880,6 +943,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
             if (!(cpu->flags & (1 << 7))) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
 
@@ -887,6 +951,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
             if (cpu->flags & (1 << 2)) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
 
@@ -894,6 +959,7 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
             if (!(cpu->flags & (1 << 2))) {
                 cpu->pc = cpu->memory[cpu->sp] | (cpu->memory[cpu->sp + 1] << 8);
                 cpu->sp += 2;
+                cycles += 6;
             } else cpu->pc += 1;
             break;
 
@@ -944,7 +1010,12 @@ int exec_instrucao(State8080 *cpu, InputOutput *io)
         }
         default:
             printf("[ERRO] Opcode nao implementado: 0x%02X no PC: 0x%04X\n", opcode, cpu->pc);
+            if (cycles_spent) *cycles_spent = cycles;
             return -1; // Retorna erro
+    }
+
+    if (cycles_spent) {
+        *cycles_spent = cycles;
     }
 
     return 0; // Retorna 0 para SUCESSO

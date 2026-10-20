@@ -20,6 +20,8 @@ typedef struct State8080 {
     uint16_t pc;
     
     uint8_t flags; // Bits: [S, Z, 0, A, 0, P, 1, C]
+    uint8_t inte;  // Interrupt Enable (1 = habilitado, 0 = desabilitado)
+    uint8_t halt;  // Estado de HALT (1 = pausado, 0 = normal)
     
     uint8_t memory[0x10000]; // 64KB de memória
 } State8080;
@@ -33,7 +35,10 @@ uint16_t get_hl(State8080 *cpu);
 void set_hl(State8080 *cpu, uint16_t val);
 void atualizar_flags_zsp(State8080 *cpu, uint8_t val);
 
-// Execução de instruções
-int exec_instrucao(State8080 *cpu, InputOutput *io);
+// Execução de instruções com retorno de ciclos consumidos
+int exec_instrucao(State8080 *cpu, InputOutput *io, int *cycles_spent);
+
+// Dispara interrupção de hardware (ex: RST 1 = 0xCF, RST 2 = 0xD7) respeitando a flag inte
+int disparar_interrupcao(State8080 *cpu, uint8_t opcode_rst);
 
 #endif

@@ -14,7 +14,7 @@ Evoluir a base funcional do emulador de Space Invaders em C para um produto fina
 
 | ID | Item de Entrega | Prioridade | Valor para o Usuário / Produto | Dependência | Spec Relacionada | Status |
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
-| **BKL-001** | **CPU Cycle Timing & Interrupt Enable** | `P0 (Crítico)` | Garante gameplay a 60 FPS reais e precisão histórica na execução dos opcodes do 8080. | Nenhuma | [`SPEC-001`](specs/SPEC-001-cpu-timing-interrupts.md) | `Pronto para Sprint 1` |
+| **BKL-001** | **CPU Cycle Timing & Interrupt Enable** | `P0 (Crítico)` | Garante gameplay a 60 FPS reais e precisão histórica na execução dos opcodes do 8080. | Nenhuma | [`SPEC-001`](specs/SPEC-001-cpu-timing-interrupts.md) | `Concluído (Sprint 1)` |
 | **BKL-002** | **Color Overlay Autêntico & Filtro CRT** | `P1 (Alto)` | Transforma o vídeo monocromático no visual original do gabinete arcade com overlay colorido (UFO vermelho, base verde) e scanlines. | BKL-001 | [`SPEC-002`](specs/SPEC-002-arcade-color-overlay-crt.md) | `Pronto para Sprint 2` |
 | **BKL-003** | **Sistema de Áudio SDL2 & Mixer de Efeitos** | `P1 (Alto)` | Adiciona os sons clássicos das portas 0x03 e 0x05 (tiro, passos dos invasores, explosão, UFO) via SDL2 Audio. | BKL-001 | [`SPEC-003`](specs/SPEC-003-arcade-audio-mixer.md) | `Pronto para Sprint 2` |
 | **BKL-004** | **Build System Universal com CMake** | `P1 (Alto)` | Unifica a compilação nativa no Windows (MSVC/Clang/MinGW) e Linux (GCC/Clang), facilitando distribuição e CI/CD. | Nenhuma | [`SPEC-004`](specs/SPEC-004-cmake-crossplatform-build.md) | `Pronto para Sprint 3` |

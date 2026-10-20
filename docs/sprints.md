@@ -24,11 +24,11 @@
 > **"Substituir o loop arbitrário por uma emulação precisa baseada no clock de 2.0 MHz do Intel 8080 e controle formal de interrupções, assegurando taxa estável de 60 FPS e compatibilidade de CPU."**
 
 ### 📦 Entregáveis
-- [ ] Implementação da tabela de ciclos do Intel 8080 (`cycles_8080[256]`).
-- [ ] Retorno de ciclos gastos por cada instrução em `exec_instrucao()`.
-- [ ] Flags de interrupção `inte` (Interrupt Enable) e `halt` em `State8080`.
-- [ ] Tratamento das instruções `EI` (0xFB) e `DI` (0xF3) e respeito ao `inte` ao despachar `RST 1` e `RST 2`.
-- [ ] Loop principal de 60 FPS com sincronização por clock de alta resolução (`SDL_GetPerformanceCounter`).
+- [x] Implementação da tabela de ciclos do Intel 8080 (`cycles_8080[256]`).
+- [x] Retorno de ciclos gastos por cada instrução em `exec_instrucao()`.
+- [x] Flags de interrupção `inte` (Interrupt Enable) e `halt` em `State8080`.
+- [x] Tratamento das instruções `EI` (0xFB) e `DI` (0xF3) e respeito ao `inte` ao despachar `RST 1` e `RST 2`.
+- [x] Loop principal de 60 FPS com sincronização por clock de alta resolução (`SDL_GetPerformanceCounter`).
 
 ### 🧪 Roteiro de Testes Q/A (Sprint 1)
 1. **QA-S1-01 (Velocidade e FPS):**
