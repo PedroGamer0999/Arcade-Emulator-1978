@@ -19,21 +19,28 @@ This project recreates in software the original arcade machine architecture desi
 * **Intel 8080 CPU (`src/cpu8080.c` / `src/cpu8080.h`)**:
   * Emulates the 8-bit registers (`A, B, C, D, E, H, L`), Stack Pointer (`SP`), Program Counter (`PC`), and status flags (`Zero, Sign, Parity, Carry`).
   * 64 KB mapped memory space.
-  * Decodes and executes the Intel 8080 instruction set.
+  * Accurate instruction cycle counts and 2.0 MHz CPU clock synchronization.
 * **I/O & Dedicated Shift Register (`src/io.c` / `src/io.h`)**:
   * Emulates the hardware *Fujitsu MB14241 Dedicated Shift Register* chip, used by the arcade board to accelerate sprite bit-shifting in real time.
   * Maps arcade input ports `0x01` and `0x02` (coin, start, player controls).
-* **Video Rendering (`src/video.c` / `src/video.h`)**:
-  * 224 × 256 monochrome resolution (1 bit per pixel in VRAM, from `0x2400` to `0x3FFF`).
-  * Real-time 90° counter-clockwise rotation to match the original vertical CRT arcade monitor.
-  * 2x scaling (448 × 512 window).
+  * Output ports `0x03` and `0x05` trigger authentic arcade audio sound effects.
+* **Video Rendering & Color Overlay (`src/video.c` / `src/video.h`)**:
+  * 224 × 256 resolution rendered at solid 60 FPS.
+  * Authentic arcade cellophane color overlay (Red top for UFO, White center for invaders, Green base for shields and cannon).
+  * Real-time switchable color modes (Arcade Overlay, Monochrome B&W, Green Phosphor CRT).
+  * Configurable CRT scanlines simulation.
+* **Audio Subsystem & Low-Latency Mixer (`src/audio.c` / `src/audio.h`)**:
+  * SDL2 audio streaming with < 30ms latency.
+  * 8-channel real-time mixer with dynamic clamping.
+  * 9 authentic 1978 arcade sounds (`sounds/*.wav`): UFO continuous loop, laser shot, player death, invader explosion, 4 fleet march notes, UFO hit.
+  * Instant mute toggle with <kbd>M</kbd>.
 * **Execution Loop & Interrupts (`src/main.c`)**:
   * Loads the 4 ROM chunks into memory:
     * `rom/invaders.h` (offset `0x0000`)
     * `rom/invaders.g` (offset `0x0800`)
     * `rom/invaders.f` (offset `0x1000`)
     * `rom/invaders.e` (offset `0x1800`)
-  * Triggers two scanline interrupts per frame (`RST 1` at mid-screen and `RST 2` at VBLANK), regulating timing at ~60 FPS.
+  * Triggers two scanline interrupts per frame (`RST 1` at mid-screen and `RST 2` at VBLANK), regulating timing at precise 60 FPS.
 
 ---
 
@@ -55,10 +62,18 @@ This project recreates in software the original arcade machine architecture desi
 │   ├── invaders.g
 │   ├── invaders.f
 │   └── invaders.e
+├── sounds/                 # Authentic 1978 arcade sound samples (WAV)
+│   ├── ufo.wav
+│   ├── shot.wav
+│   ├── player_die.wav
+│   ├── invader_die.wav
+│   ├── fleet1.wav to fleet4.wav
+│   └── ufo_hit.wav
 └── src/                    # C Source files
     ├── cpu8080.c / .h
     ├── io.c / .h
     ├── video.c / .h
+    ├── audio.c / .h
     └── main.c
 ```
 
@@ -92,14 +107,14 @@ Double-click `makefile.bat`.
 #### Option 4: Direct Clang Command
 ```powershell
 $env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
-clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
+clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
 ```
 
 ---
 
 ### 🚀 How to Run
 
-Ensure `SDL2.dll` and the `rom/` directory are located in the same folder as `space_invaders.exe`:
+Ensure `SDL2.dll`, the `sounds/` directory, and the `rom/` directory are located in the same folder as `space_invaders.exe`:
 
 * **In PowerShell:**
   ```powershell
@@ -119,6 +134,9 @@ Ensure `SDL2.dll` and the `rom/` directory are located in the same folder as `sp
 | <kbd>←</kbd> | Move Left |
 | <kbd>→</kbd> | Move Right |
 | <kbd>Space</kbd> | Shoot |
+| <kbd>F2</kbd> | Cycle Color Mode (Overlay / B&W / Green Phosphor) |
+| <kbd>F3</kbd> | Toggle CRT Scanlines Filter |
+| <kbd>M</kbd> | Toggle Audio Mute |
 
 ---
 
@@ -136,21 +154,28 @@ O projeto recria fielmente em software a arquitetura de hardware do gabinete arc
 * **CPU Intel 8080 (`src/cpu8080.c` / `src/cpu8080.h`)**:
   * Emulação dos registradores de 8 bits (`A, B, C, D, E, H, L`), Stack Pointer (`SP`), Program Counter (`PC`) e flags de status (`Zero, Sign, Parity, Carry`).
   * Gerenciamento de 64 KB de memória RAM/ROM.
-  * Decodificação e execução dos opcodes de montagem do processador 8080.
+  * Tabela precisa de ciclos de instrução sincronizada ao clock de 2.0 MHz da CPU.
 * **Hardware de I/O e Shift Register (`src/io.c` / `src/io.h`)**:
   * Emulação do chip dedicado de deslocamento de bits (*Fujitsu MB14241 Dedicated Shift Register*), usado pela máquina para desenhar sprites em alta velocidade.
   * Mapeamento de entradas das portas `0x01` e `0x02` (moedas, botões e controles).
-* **Renderização de Vídeo (`src/video.c` / `src/video.h`)**:
-  * Resolução original de **224 × 256** pixels monocromáticos (1 bit por pixel na VRAM, entre `0x2400` e `0x3FFF`).
-  * Rotação de 90° no sentido anti-horário em tempo real para compensar o monitor CRT vertical do gabinete original.
-  * Escala gráfica de 2x (janela de 448 × 512 pixels).
+  * Portas de saída `0x03` e `0x05` para disparo de efeitos sonoros clássicos.
+* **Renderização de Vídeo & Color Overlay (`src/video.c` / `src/video.h`)**:
+  * Resolução original de **224 × 256** pixels a 60 FPS constantes.
+  * Color Overlay autêntico do arcade (vermelho no topo para UFO, branco no meio para invasores, verde na base para barricadas e canhão).
+  * Modos visuais comutáveis em tempo de execução via <kbd>F2</kbd> (Color Overlay, Monocromático P&B, Verde Fósforo CRT).
+  * Efeito de Scanlines CRT comutável via <kbd>F3</kbd>.
+* **Subsistema de Áudio & Mixer de Baixa Latência (`src/audio.c` / `src/audio.h`)**:
+  * Áudio SDL2 com latência inferior a 30 ms.
+  * Mixer em tempo real com até 8 canais simultâneos e clamp contra distorção.
+  * 9 efeitos sonoros autênticos (`sounds/*.wav`): Som contínuo em loop da nave-mãe (UFO), tiro a laser, destruição do jogador, explosão de alien, 4 notas da marcha alienígena e hit no UFO.
+  * Tecla de atalho para Mute instantâneo com <kbd>M</kbd>.
 * **Ciclo de Execução e Interrupções (`src/main.c`)**:
   * Carrega os 4 arquivos de ROM na memória:
     * `rom/invaders.h` (endereço `0x0000`)
     * `rom/invaders.g` (endereço `0x0800`)
     * `rom/invaders.f` (endereço `0x1000`)
     * `rom/invaders.e` (endereço `0x1800`)
-  * Gera as duas interrupções de varredura por frame (`RST 1` no meio da tela e `RST 2` no VBLANK), sincronizando a taxa em ~60 FPS.
+  * Gera as duas interrupções de varredura por frame (`RST 1` no meio da tela e `RST 2` no VBLANK), sincronizando a taxa em exatos 60 FPS.
 
 ---
 
@@ -172,10 +197,18 @@ O projeto recria fielmente em software a arquitetura de hardware do gabinete arc
 │   ├── invaders.g
 │   ├── invaders.f
 │   └── invaders.e
+├── sounds/                 # Banco de efeitos sonoros originais WAV
+│   ├── ufo.wav
+│   ├── shot.wav
+│   ├── player_die.wav
+│   ├── invader_die.wav
+│   ├── fleet1.wav a fleet4.wav
+│   └── ufo_hit.wav
 └── src/                    # Código-fonte em C
     ├── cpu8080.c / .h
     ├── io.c / .h
     ├── video.c / .h
+    ├── audio.c / .h
     └── main.c
 ```
 
@@ -210,14 +243,14 @@ Dê duplo clique no arquivo `makefile.bat`.
 #### Opção 4: Comando Manual Direto
 ```powershell
 $env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
-clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
+clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
 ```
 
 ---
 
 ### 🚀 Como Executar
 
-Certifique-se de que o arquivo `SDL2.dll` e a pasta `rom/` estejam no mesmo diretório de `space_invaders.exe`:
+Certifique-se de que o arquivo `SDL2.dll`, a pasta `sounds/` e a pasta `rom/` estejam no mesmo diretório de `space_invaders.exe`:
 
 * **Pelo PowerShell:**
   ```powershell
@@ -237,3 +270,6 @@ Certifique-se de que o arquivo `SDL2.dll` e a pasta `rom/` estejam no mesmo dire
 | <kbd>←</kbd> | Mover para a Esquerda |
 | <kbd>→</kbd> | Mover para a Direita |
 | <kbd>Espaço</kbd> | Atirar |
+| <kbd>F2</kbd> | Alternar Paleta de Cores (Overlay / P&B / Verde Fósforo) |
+| <kbd>F3</kbd> | Ligar/Desligar Filtro de Scanlines CRT |
+| <kbd>M</kbd> | Ligar/Desligar Áudio (Mute) |

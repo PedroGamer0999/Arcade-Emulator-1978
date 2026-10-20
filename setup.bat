@@ -115,7 +115,7 @@ echo [4/5] Executando teste de compilacao com Clang...
 
 set "PATH=%MSYS_PATH%\ucrt64\bin;%PATH%"
 
-clang -Wall -Wextra -I. -Isrc src\main.c src\cpu8080.c src\io.c src\video.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
+clang -Wall -Wextra -I. -Isrc src\main.c src\cpu8080.c src\io.c src\video.c src\audio.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
 
 if errorlevel 1 (
     echo.

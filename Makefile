@@ -1,15 +1,20 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -I. -Isrc
-LDFLAGS = -lSDL2
+
+ifeq ($(OS),Windows_NT)
+    LDFLAGS = -lmingw32 -lSDL2main -lSDL2 -lm
+    TARGET = space_invaders.exe
+else
+    LDFLAGS = -lSDL2 -lm
+    TARGET = space_invaders
+endif
 
 # Diretórios
 SRC_DIR = src
-OBJ_DIR = src
 
 # Fontes e Objetos
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(SRCS:.c=.o)
-TARGET = space_invaders
 
 # Regra principal
 all: $(TARGET)
