@@ -3,6 +3,7 @@
 #include "cpu8080.h"
 #include "io.h"
 #include "video.h"
+#include "audio.h"
 
 // Constantes de clock e temporização do Intel 8080
 #define CPU_CLOCK_HZ        2000000
@@ -21,12 +22,14 @@ int main(int argc, char *argv[]) {
     init_io(&io);
 
     if (init_video(&display) != 0) return 1;
+    init_audio("sounds");
 
     if (carregar_rom(&cpu, "rom/invaders.h", 0x0000) != 0 ||
         carregar_rom(&cpu, "rom/invaders.g", 0x0800) != 0 ||
         carregar_rom(&cpu, "rom/invaders.f", 0x1000) != 0 ||
         carregar_rom(&cpu, "rom/invaders.e", 0x1800) != 0) {
         printf("Erro ao carregar ROMs.\n");
+        close_audio();
         fechar_video(&display);
         return 1;
     }
@@ -54,7 +57,15 @@ int main(int argc, char *argv[]) {
             if (event.type == SDL_QUIT) {
                 rodando = 0;
             } else if (event.type == SDL_KEYDOWN) {
-                tratar_teclado(&io, event.key.keysym.sym, 1);
+                if (event.key.keysym.sym == SDLK_F2) {
+                    alternar_modo_cor(&display);
+                } else if (event.key.keysym.sym == SDLK_F3) {
+                    alternar_scanlines(&display);
+                } else if (event.key.keysym.sym == SDLK_m) {
+                    toggle_mute();
+                } else {
+                    tratar_teclado(&io, event.key.keysym.sym, 1);
+                }
             } else if (event.type == SDL_KEYUP) {
                 tratar_teclado(&io, event.key.keysym.sym, 0);
             }
@@ -123,6 +134,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    close_audio();
     fechar_video(&display);
     return 0;
 }

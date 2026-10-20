@@ -8,6 +8,8 @@ typedef struct InputOutput {
     uint8_t port2; // Porta 0x02: P2 Start, Tiro, Esquerda, Direita, Vidas
     uint16_t shift_register;
     uint8_t shift_offset;
+    uint8_t prev_port3; // Ultimo valor da Porta 0x03 (Audio Banco 1)
+    uint8_t prev_port5; // Ultimo valor da Porta 0x05 (Audio Banco 2)
 } InputOutput;
 
 void init_io(InputOutput *io);

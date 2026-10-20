@@ -1,11 +1,32 @@
 #include <stdio.h>
 #include "video.h"
 
+static inline uint32_t obter_cor_pixel(int y, ColorMode modo) {
+    if (modo == COLOR_MODE_MONOCHROME) {
+        return 0xFFFFFFFF; // Branco puro
+    }
+    if (modo == COLOR_MODE_GREEN_PHOSPHOR) {
+        return 0x33FF33FF; // Verde fosforo CRT P1
+    }
+
+    // COLOR_MODE_OVERLAY (Gabinete Original 1978)
+    if (y < 32) {
+        return 0xE62626FF; // Vermelho arcade (UFO e placar)
+    } else if (y >= 184) {
+        return 0x26E626FF; // Verde arcade (Barricadas, canhao e solo)
+    }
+
+    return 0xFFFFFFFF; // Branco puro (Invasores)
+}
+
 int init_video(Display *display) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("Erro ao inicializar SDL: %s\n", SDL_GetError());
         return -1;
     }
+
+    display->modo_cor = COLOR_MODE_OVERLAY;
+    display->habilitar_scanlines = 0;
 
     display->janela = SDL_CreateWindow(
         "Space Invaders - Emulator",
@@ -49,7 +70,7 @@ int init_video(Display *display) {
     return 0;
 }
 
-// Renderiza a VRAM (0x2400 a 0x3FFF) ajustando a rotação de 90° do arcade original
+// Renderiza a VRAM (0x2400 a 0x3FFF) ajustando a rotacao de 90 graus do arcade original
 void atualizar_video(Display *display, const State8080 *cpu) {
     uint16_t vram_start = 0x2400;
 
@@ -60,11 +81,20 @@ void atualizar_video(Display *display, const State8080 *cpu) {
             for (int bit = 0; bit < 8; bit++) {
                 uint8_t pixel_ativo = (byte >> bit) & 1;
 
-                // Mapeia as coordenadas rotacionadas para a tela na orientação correta
+                // Mapeia as coordenadas rotacionadas para a tela na orientacao correta
                 int x = col;
                 int y = 255 - (row + bit);
 
-                uint32_t cor = pixel_ativo ? 0xFFFFFFFF : 0x000000FF; // Branco ou Preto
+                uint32_t cor = 0x000000FF; // Fundo preto
+                if (pixel_ativo) {
+                    cor = obter_cor_pixel(y, display->modo_cor);
+                    if (display->habilitar_scanlines && (y % 2 == 1)) {
+                        uint8_t r = (uint8_t)(((cor >> 24) & 0xFF) * 3 / 4);
+                        uint8_t g = (uint8_t)(((cor >> 16) & 0xFF) * 3 / 4);
+                        uint8_t b = (uint8_t)(((cor >> 8) & 0xFF) * 3 / 4);
+                        cor = ((uint32_t)r << 24) | ((uint32_t)g << 16) | ((uint32_t)b << 8) | 0xFF;
+                    }
+                }
                 display->pixels[y * LARGURA_TELA + x] = cor;
             }
         }
@@ -74,6 +104,14 @@ void atualizar_video(Display *display, const State8080 *cpu) {
     SDL_RenderClear(display->renderer);
     SDL_RenderCopy(display->renderer, display->textura, NULL, NULL);
     SDL_RenderPresent(display->renderer);
+}
+
+void alternar_modo_cor(Display *display) {
+    display->modo_cor = (ColorMode)((display->modo_cor + 1) % COLOR_MODE_COUNT);
+}
+
+void alternar_scanlines(Display *display) {
+    display->habilitar_scanlines = !display->habilitar_scanlines;
 }
 
 void fechar_video(Display *display) {

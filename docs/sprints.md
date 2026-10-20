@@ -49,11 +49,11 @@
 > **"Entregar a experiência sensorial autêntica do arcade clássico de 1978, implementando o Color Overlay do gabinete original e os efeitos sonoros gerados pelas portas de áudio 0x03 e 0x05."**
 
 ### 📦 Entregáveis
-- [ ] Colorização por faixas de coordenadas Y (Vermelho no topo para UFO, Branco no meio para aliens, Verde na base para canhão e barricadas).
-- [ ] Efeito CRT opcional configurável (Scanlines sutis e ajuste de aspecto 4:3).
-- [ ] Subsistema de áudio SDL2 (`SDL_OpenAudioDevice` com buffer de baixa latência).
-- [ ] Banco de samples WAV dos 9 sons do arcade (UFO, tiro, morte do jogador, explosão de alien, marcha 1-4, hit no UFO).
-- [ ] Monitoramento de transição de bits (0 -> 1) nas portas OUT `0x03` e `0x05`.
+- [x] Colorização por faixas de coordenadas Y (Vermelho no topo para UFO, Branco no meio para aliens, Verde na base para canhão e barricadas).
+- [x] Efeito CRT opcional configurável (Scanlines sutis com <kbd>F3</kbd> e modos de paleta com <kbd>F2</kbd>).
+- [x] Subsistema de áudio SDL2 (`SDL_OpenAudioDevice` com buffer de baixa latência < 30ms).
+- [x] Banco de samples WAV dos 9 sons do arcade (UFO, tiro, morte do jogador, explosão de alien, marcha 1-4, hit no UFO).
+- [x] Monitoramento de transição de bits (0 -> 1) nas portas OUT `0x03` e `0x05`.
 
 ### 🧪 Roteiro de Testes Q/A (Sprint 2)
 1. **QA-S2-01 (Fidelidade de Cores):**
@@ -66,7 +66,7 @@
    - *Procedimento:* Aguardar o aparecimento da nave-mãe no topo da tela.
    - *Critério de Aceite:* O som característico do UFO deve tocar em loop enquanto o bit da porta 3 estiver em 1, e cessar imediatamente quando o UFO sair ou for destruído.
 4. **QA-S2-04 (Alternância de Scanlines):**
-   - *Procedimento:* Pressionar tecla de atalho (ex: <kbd>F2</kbd>) para ligar/desligar scanlines.
+   - *Procedimento:* Pressionar tecla de atalho (ex: <kbd>F3</kbd>) para ligar/desligar scanlines.
    - *Critério de Aceite:* A imagem deve alternar entre pixels nítidos e efeito CRT retrô sem queda de FPS.
 
 ---

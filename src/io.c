@@ -1,6 +1,7 @@
 #include <stdio.h>
-#include "io.h"
 #include <SDL2/SDL.h>
+#include "io.h"
+#include "audio.h"
 
 void init_io(InputOutput *io) {
     // O bit 3 da Porta 1 deve iniciar em 1 para indicar funcionamento normal
@@ -8,6 +9,8 @@ void init_io(InputOutput *io) {
     io->port2 = 0x00;
     io->shift_register = 0;
     io->shift_offset = 0;
+    io->prev_port3 = 0;
+    io->prev_port5 = 0;
 }
 
 uint8_t io_in(InputOutput *io, uint8_t port) {
@@ -30,8 +33,16 @@ void io_out(InputOutput *io, uint8_t port, uint8_t value) {
         case 2:
             io->shift_offset = value & 0x07;
             break;
+        case 3:
+            update_sound_port3(value, io->prev_port3);
+            io->prev_port3 = value;
+            break;
         case 4:
             io->shift_register = (io->shift_register >> 8) | ((uint16_t)value << 8);
+            break;
+        case 5:
+            update_sound_port5(value, io->prev_port5);
+            io->prev_port5 = value;
             break;
         default:
             break;

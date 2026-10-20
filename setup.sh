@@ -62,7 +62,7 @@ fi
 echo ""
 echo "[3/4] Compilando o Space Invaders..."
 
-gcc -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c -o space_invaders -lSDL2
+gcc -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders -lSDL2 -lm
 
 # -------------------------------------------------------------------------
 # 4. Conclusao
