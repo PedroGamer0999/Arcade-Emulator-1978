@@ -4,14 +4,11 @@
 #include "io.h"
 #include "video.h"
 
-void gerar_interrupcao(State8080 *cpu, uint8_t opcode_rst) {
-    cpu->sp -= 2;
-    cpu->memory[cpu->sp] = cpu->pc & 0xFF;
-    cpu->memory[cpu->sp + 1] = (cpu->pc >> 8) & 0xFF;
-    
-    if (opcode_rst == 0xCF) cpu->pc = 0x0008;      // RST 1
-    else if (opcode_rst == 0xD7) cpu->pc = 0x0010; // RST 2
-}
+// Constantes de clock e temporização do Intel 8080
+#define CPU_CLOCK_HZ        2000000
+#define TARGET_FPS          60
+#define CYCLES_PER_FRAME    (CPU_CLOCK_HZ / TARGET_FPS)    // 33.333 ciclos
+#define CYCLES_PER_HALF     (CYCLES_PER_FRAME / 2)         // 16.666 ciclos
 
 int main(int argc, char *argv[]) {
     (void)argc; (void)argv;
@@ -36,9 +33,23 @@ int main(int argc, char *argv[]) {
 
     int rodando = 1;
     SDL_Event event;
-    uint8_t proxima_interrupcao = 0xCF;
+
+    // Frequência do contador de alta resolução do SDL
+    uint64_t perf_freq = SDL_GetPerformanceFrequency();
+    double target_frame_ms = 1000.0 / (double)TARGET_FPS; // ~16.6667 ms
+
+    // Variáveis para medição e exibição de FPS
+    uint64_t fps_timer = SDL_GetPerformanceCounter();
+    int frame_count = 0;
+    char title_buf[64];
+
+    // Acumulador de ciclos para compensar eventuais excessos entre fatias
+    int ciclos_executados = 0;
 
     while (rodando) {
+        uint64_t frame_start = SDL_GetPerformanceCounter();
+
+        // 1. Processa eventos de entrada (teclado e janela)
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 rodando = 0;
@@ -49,22 +60,66 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // Executa instruções da CPU por meio frame
-        for (int i = 0; i < 2000; i++) {
-            if (exec_instrucao(&cpu, &io) != 0) {
+        if (!rodando) break;
+
+        // 2. Primeiro meio frame: executa ~16.666 ciclos até a metade da tela (scanline 96)
+        while (ciclos_executados < CYCLES_PER_HALF) {
+            int cycles = 0;
+            if (exec_instrucao(&cpu, &io, &cycles) != 0) {
                 rodando = 0;
                 break;
             }
+            ciclos_executados += cycles;
+        }
+        ciclos_executados -= CYCLES_PER_HALF;
+
+        // Dispara RST 1 (0xCF) para scanline 96 (se interrupções estiverem habilitadas)
+        disparar_interrupcao(&cpu, 0xCF);
+
+        if (!rodando) break;
+
+        // 3. Segundo meio frame: executa ~16.667 ciclos até o final da tela (VBLANK)
+        while (ciclos_executados < (CYCLES_PER_FRAME - CYCLES_PER_HALF)) {
+            int cycles = 0;
+            if (exec_instrucao(&cpu, &io, &cycles) != 0) {
+                rodando = 0;
+                break;
+            }
+            ciclos_executados += cycles;
+        }
+        ciclos_executados -= (CYCLES_PER_FRAME - CYCLES_PER_HALF);
+
+        // Dispara RST 2 (0xD7) para VBLANK (se interrupções estiverem habilitadas)
+        disparar_interrupcao(&cpu, 0xD7);
+
+        // 4. Atualiza a renderização de vídeo
+        atualizar_video(&display, &cpu);
+
+        // 5. Sincronização 60 FPS: Híbrido SDL_Delay + Busy-Wait de alta precisão
+        uint64_t frame_now = SDL_GetPerformanceCounter();
+        double elapsed_ms = (double)(frame_now - frame_start) * 1000.0 / (double)perf_freq;
+        double remaining_ms = target_frame_ms - elapsed_ms;
+
+        // Se sobrar tempo considerável (>2ms), dorme para poupar CPU
+        if (remaining_ms > 2.0) {
+            SDL_Delay((Uint32)(remaining_ms - 1.5));
         }
 
-        gerar_interrupcao(&cpu, proxima_interrupcao);
+        // Busy-wait de precisão nos microssegundos finais para cravar exatamente 60 FPS
+        while (((double)(SDL_GetPerformanceCounter() - frame_start) * 1000.0 / (double)perf_freq) < target_frame_ms) {
+            // Espera ativa fina
+        }
 
-        if (proxima_interrupcao == 0xCF) {
-            proxima_interrupcao = 0xD7;
-        } else {
-            proxima_interrupcao = 0xCF;
-            atualizar_video(&display, &cpu);
-            SDL_Delay(16);
+        // 6. Atualização do medidor de FPS no título da janela
+        frame_count++;
+        uint64_t now = SDL_GetPerformanceCounter();
+        double sec_diff = (double)(now - fps_timer) / (double)perf_freq;
+        if (sec_diff >= 1.0) {
+            double current_fps = (double)frame_count / sec_diff;
+            snprintf(title_buf, sizeof(title_buf), "Space Invaders Arcade (%.1f FPS)", current_fps);
+            SDL_SetWindowTitle(display.janela, title_buf);
+            frame_count = 0;
+            fps_timer = now;
         }
     }
 
