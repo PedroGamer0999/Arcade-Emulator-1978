@@ -16,6 +16,17 @@ space_invaders.exe
 *.lib
 *.a
 
+# ===============================
+# CMake Build Output
+# ===============================
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake
+!CMakeLists.txt
+
 # Arquivos de depuração e linking
 *.pdb
 *.ilk

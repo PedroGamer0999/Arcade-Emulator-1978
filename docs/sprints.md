@@ -1,4 +1,4 @@
-# Sprints & Release Plan - Space Invaders Arcade Emulator
+﻿# Sprints & Release Plan - Space Invaders Arcade Emulator
 
 > Plano de iterações organizado por valor de entrega.
 > Cada sprint possui um objetivo de negócio claro (GOAL), entregáveis rastreáveis e um roteiro de testes para Quality Assurance (Q/A).
@@ -77,11 +77,13 @@
 > **"Eliminar scripts de compilação frágeis e unificar a compilação do projeto com CMake universal, garantindo compilação nativa de 1 comando no Windows e no Linux sem dependências rígidas de caminhos locais."**
 
 ### 📦 Entregáveis
-- [ ] Arquivo `CMakeLists.txt` na raiz com suporte a alvos de debug e release.
-- [ ] Detecção automática da biblioteca SDL2 via `find_package(SDL2 REQUIRED)`.
-- [ ] Target multiplataforma para Windows (MinGW, Clang, MSVC) e Linux (GCC, Clang).
-- [ ] Scripts unificados de atalho (`build.sh` e `build.bat` chamando o CMake).
-- [ ] Configuração de warnings rigorosos (`-Wall -Wextra -Wpedantic` ou `/W4`).
+- [x] Arquivo `CMakeLists.txt` na raiz com suporte a alvos de debug e release.
+- [x] Detecção automática da biblioteca SDL2 via `find_package(SDL2 REQUIRED)` + fallback `pkg-config`.
+- [x] POST_BUILD: cópia automática de `rom/`, `sounds/` e `SDL2.dll` para o diretório do binário.
+- [x] Target multiplataforma para Windows (MinGW/GCC) e Linux (GCC/Clang).
+- [x] Scripts de conveniência `build.bat` (Windows) e `build.sh` (Linux/macOS) chamando o CMake.
+- [x] Configuração de warnings rigorosos (`-Wall -Wextra -Wpedantic` no GCC/Clang, `/W4 /WX` no MSVC).
+- [x] `README.md` atualizado com instruções claras para Windows e Linux.
 
 ### 🧪 Roteiro de Testes Q/A (Sprint 3)
 1. **QA-S3-01 (Build Limpo no Linux):**
