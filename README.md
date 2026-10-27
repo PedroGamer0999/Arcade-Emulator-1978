@@ -1,4 +1,4 @@
-# Space Invaders Arcade Emulator (1978)
+﻿# Space Invaders Arcade Emulator (1978)
 
 [![Language](https://img.shields.io/badge/Language-English%20%7C%20Portugu%C3%AAs-blue.svg)](#space-invaders-arcade-emulator-1978)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENCE.md)
@@ -48,15 +48,17 @@ This project recreates in software the original arcade machine architecture desi
 
 ```text
 008-space-invaders-emulator/
+├── CMakeLists.txt          # Universal CMake build system (v1.2+)
+├── build.bat               # Windows one-click CMake build helper
+├── build.sh                # Linux / macOS one-click CMake build helper
 ├── LICENCE.md              # MIT License
-├── Makefile                # Standard Makefile for Linux / macOS (make)
-├── makefile.bat            # Windows batch script for one-click compilation
-├── makefile.ps1            # Windows PowerShell build script
+├── Makefile                # Legacy Makefile for Linux / macOS (make)
+├── makefile.bat            # Legacy Windows batch build script
+├── makefile.ps1            # Legacy Windows PowerShell build script
 ├── README.md               # Documentation
 ├── SDL2.dll                # SDL2 runtime library for Windows
 ├── setup.bat               # Windows one-click environment installer
 ├── setup.sh                # Linux one-click environment installer
-├── space_invaders.exe      # Compiled Windows executable
 ├── rom/                    # Space Invaders original ROM files
 │   ├── invaders.h
 │   ├── invaders.g
@@ -88,26 +90,36 @@ To install all dependencies (compilers, SDL2, VS Code configs) and initialize AI
 
 ---
 
-### 🔨 Manual Build
+### 🔨 Build
 
-#### Option 1: On Linux / macOS (GNU Make)
+#### ✅ Option 1 (Recommended): CMake — Universal
+
+**Windows:**
+```bat
+build.bat
+```
+
+**Linux / macOS:**
+```bash
+chmod +x build.sh && ./build.sh
+```
+
+The executable and all required assets (SDL2.dll, om/, sounds/) are automatically placed in the uild/ directory.
+
+#### Option 2: Manual CMake Commands
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+```
+
+#### Option 3: Legacy — Linux / macOS (GNU Make)
 ```bash
 make
 ```
 
-#### Option 2: On Windows via PowerShell (makefile.ps1)
-Run in PowerShell:
+#### Option 4: Legacy — Windows PowerShell
 ```powershell
 .\makefile.ps1
-```
-
-#### Option 3: On Windows via Explorer (makefile.bat)
-Double-click `makefile.bat`.
-
-#### Option 4: Direct Clang Command
-```powershell
-$env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
-clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
 ```
 
 ---
@@ -183,15 +195,17 @@ O projeto recria fielmente em software a arquitetura de hardware do gabinete arc
 
 ```text
 008-space-invaders-emulator/
+├── CMakeLists.txt          # Sistema de build CMake universal (v1.2+)
+├── build.bat               # Helper de build CMake para Windows (1 clique)
+├── build.sh                # Helper de build CMake para Linux / macOS (1 clique)
 ├── LICENCE.md              # Licença MIT
-├── Makefile                # Makefile padrão para Linux / macOS (make)
-├── makefile.bat            # Script para compilação via duplo clique no Windows
-├── makefile.ps1            # Script de compilação via PowerShell no Windows
+├── Makefile                # Makefile legado para Linux / macOS (make)
+├── makefile.bat            # Script legado de compilação no Windows
+├── makefile.ps1            # Script legado de compilação via PowerShell
 ├── README.md               # Documentação
 ├── SDL2.dll                # Biblioteca dinâmica da SDL2 para execução
 ├── setup.bat               # Instalador automatizado de ambiente para Windows
 ├── setup.sh                # Instalador automatizado de ambiente para Linux
-├── space_invaders.exe      # Executável gerado
 ├── rom/                    # ROMs originais do Space Invaders
 │   ├── invaders.h
 │   ├── invaders.g
@@ -223,27 +237,36 @@ Para instalar todas as dependências (compilador, SDL2, configurações do VS Co
 
 ---
 
-### 🔨 Compilação Manual
+### 🔨 Compilação
 
-#### Opção 1: No Linux / macOS (via Makefile)
-Execute no terminal:
+#### ✅ Opção 1 (Recomendada): CMake — Universal
+
+**Windows:**
+```bat
+build.bat
+```
+
+**Linux / macOS:**
+```bash
+chmod +x build.sh && ./build.sh
+```
+
+O executável e todos os assets necessários (SDL2.dll, om/, sounds/) são copiados automaticamente para a pasta uild/.
+
+#### Opção 2: Comandos CMake Manuais
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+```
+
+#### Opção 3: Legado — Linux / macOS (GNU Make)
 ```bash
 make
 ```
 
-#### Opção 2: No Windows pelo PowerShell (makefile.ps1)
-Execute o script automatizado no PowerShell:
+#### Opção 4: Legado — Windows PowerShell
 ```powershell
 .\makefile.ps1
-```
-
-#### Opção 3: No Windows pelo Explorer (makefile.bat)
-Dê duplo clique no arquivo `makefile.bat`.
-
-#### Opção 4: Comando Manual Direto
-```powershell
-$env:PATH = "C:\msys64\ucrt64\bin;$env:PATH"
-clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
 ```
 
 ---
