@@ -27,7 +27,7 @@ jobs:
 
       - name: Compile Space Invaders (Linux)
         run: |
-          gcc -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders -lSDL2 -lm
+          gcc -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c src/miniz.c src/rom_manager.c src/game_driver.c -o space_invaders -lSDL2 -lm
 
       - name: Package Linux Artifact
         run: |
@@ -76,7 +76,7 @@ jobs:
       - name: Compile Space Invaders (Windows)
         shell: msys2 {0}
         run: |
-          clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
+          clang -Wall -Wextra -I. -Isrc src/main.c src/cpu8080.c src/io.c src/video.c src/audio.c src/miniz.c src/rom_manager.c src/game_driver.c -o space_invaders.exe -lmingw32 -lSDL2main -lSDL2
           cp /ucrt64/bin/SDL2.dll .
 
       - name: Package Windows Artifact

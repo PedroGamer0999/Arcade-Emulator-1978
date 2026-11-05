@@ -104,7 +104,8 @@ build.bat
 chmod +x build.sh && ./build.sh
 ```
 
-The executable and all required assets (SDL2.dll, om/, sounds/) are automatically placed in the uild/ directory.
+The executable and all required assets (SDL2.dll, 
+om/, sounds/) are automatically placed in the uild/ directory.
 
 #### Option 2: Manual CMake Commands
 ```bash
@@ -124,16 +125,49 @@ make
 
 ---
 
-### 🚀 How to Run
+### 🚀 How to Run & Test
 
-Ensure `SDL2.dll`, the `sounds/` directory, and the `rom/` directory are located in the same folder as `space_invaders.exe`:
+After compiling with CMake, the executable `SpaceInvadersEmulator.exe` (or `SpaceInvadersEmulator` on Linux/macOS) is generated inside the `build/` folder along with all necessary assets.
 
-* **In PowerShell:**
+#### Command-Line Options
+
+```bash
+# Display help and usage instructions
+./build/SpaceInvadersEmulator -help
+
+# List all supported arcade game drivers in the catalog
+./build/SpaceInvadersEmulator -list
+```
+
+#### Running Games
+
+* **Standard Space Invaders (from `rom/` directory):**
   ```powershell
-  .\space_invaders.exe
+  .\build\SpaceInvadersEmulator.exe
   ```
-* **In Windows Explorer:**  
-  Double-click `space_invaders.exe`.
+
+* **Running directly from a MAME ZIP file:**
+  ```powershell
+  .\build\SpaceInvadersEmulator.exe roms\invaders.zip
+  ```
+
+* **Selecting a specific game driver by ID:**
+  ```powershell
+  # Supported IDs: invaders, invadpt2, lrescu, ballbomb, schaser, cpudiag
+  .\build\SpaceInvadersEmulator.exe -game lrescu roms\
+  ```
+
+* **Running the 8080 CPU Diagnostic (CPUDIAG) suite:**
+  ```powershell
+  .\build\SpaceInvadersEmulator.exe -test
+  ```
+
+#### Automated Unit Tests
+
+To run the automated ROM Manager and Game Driver validation test suite:
+```powershell
+.\tests\test_rom_manager.exe
+```
 
 ---
 
@@ -251,7 +285,8 @@ build.bat
 chmod +x build.sh && ./build.sh
 ```
 
-O executável e todos os assets necessários (SDL2.dll, om/, sounds/) são copiados automaticamente para a pasta uild/.
+O executável e todos os assets necessários (SDL2.dll, 
+om/, sounds/) são copiados automaticamente para a pasta uild/.
 
 #### Opção 2: Comandos CMake Manuais
 ```bash
@@ -271,16 +306,49 @@ make
 
 ---
 
-### 🚀 Como Executar
+### 🚀 Como Executar e Testar
 
-Certifique-se de que o arquivo `SDL2.dll`, a pasta `sounds/` e a pasta `rom/` estejam no mesmo diretório de `space_invaders.exe`:
+Após a compilação com CMake, o executável `SpaceInvadersEmulator.exe` (ou `SpaceInvadersEmulator` no Linux/macOS) é gerado dentro da pasta `build/` acompanhado de todos os assets necessários.
 
-* **Pelo PowerShell:**
+#### Opções de Linha de Comando
+
+```bash
+# Exibir ajuda e sintaxe de uso
+./build/SpaceInvadersEmulator -help
+
+# Listar os jogos suportados no catálogo
+./build/SpaceInvadersEmulator -list
+```
+
+#### Executando os Jogos
+
+* **Space Invaders padrão (a partir da pasta `rom/`):**
   ```powershell
-  .\space_invaders.exe
+  .\build\SpaceInvadersEmulator.exe
   ```
-* **Pelo Windows Explorer:**  
-  Dê duplo clique diretamente no arquivo `space_invaders.exe`.
+
+* **Executar diretamente a partir de um arquivo ZIP do MAME:**
+  ```powershell
+  .\build\SpaceInvadersEmulator.exe roms\invaders.zip
+  ```
+
+* **Selecionar um jogo específico pelo ID do driver:**
+  ```powershell
+  # IDs suportados: invaders, invadpt2, lrescu, ballbomb, schaser, cpudiag
+  .\build\SpaceInvadersEmulator.exe -game lrescu roms\
+  ```
+
+* **Executar a suíte de diagnóstico de CPU 8080 (CPUDIAG):**
+  ```powershell
+  .\build\SpaceInvadersEmulator.exe -test
+  ```
+
+#### Testes Automatizados de Unidade
+
+Para executar a suíte automatizada de testes do Gerenciador de ROMs e Game Drivers:
+```powershell
+.\tests\test_rom_manager.exe
+```
 
 ---
 

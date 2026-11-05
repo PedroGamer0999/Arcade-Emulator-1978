@@ -104,15 +104,15 @@
 > **"Criar um gerenciador robusto com extração de arquivos ZIP e validação de integridade por hashes CRC32/SHA-1, habilitando a execução de múltiplos jogos clássicos da placa 8080."**
 
 ### 📦 Entregáveis
-- [ ] Integração da biblioteca de descompactação `miniz` em C puro (sem dependência externa).
-- [ ] Módulo de cálculo de CRC32 e SHA-1 em C (`src/rom_manager.c`).
-- [ ] Catálogo de jogos em C com suporte a:
+- [x] Integração da biblioteca de descompactação `miniz` em C puro (sem dependência externa).
+- [x] Módulo de cálculo de CRC32 e SHA-1 em C (`src/rom_manager.c`).
+- [x] Catálogo de jogos em C com suporte a:
   - Space Invaders (1978 - Midway / Taito)
   - Space Invaders Part II / Deluxe (1979)
   - Lunar Rescue (1979)
   - Balloon Bomber (1980)
   - CPUDIAG (ROM de diagnóstico da CPU 8080)
-- [ ] Carga direta de ROMs via linha de comando: `./space_invaders <caminho_ou_zip>`.
+- [x] Carga direta de ROMs via linha de comando: ./SpaceInvadersEmulator [caminho_ou_zip] e flag -game <id>.
 
 ### 🧪 Roteiro de Testes Q/A (Sprint 4)
 1. **QA-S4-01 (Validação de ROM Corrompida):**
